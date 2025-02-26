@@ -12,6 +12,9 @@ dependencies = [
     "pyyaml (>=6.0.2,<7.0.0)"
 ]
 
+[project.scripts]
+dotmgr = "dotmgr.__main__:main"
+
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
