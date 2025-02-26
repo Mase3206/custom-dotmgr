@@ -11,7 +11,7 @@ from dotmgr import outputs as out
 import shutil
 
 
-class IsDirectoryError(Exception):
+class IsDirectoryError(FileExistsError):
 	pass
 
 class FileTypeError(Exception):
@@ -33,7 +33,7 @@ class Dotfile:
 		self._prefix = HOME / PREFIX
 		# self.repo_src = dotfiles_repo / relative_path
 		self.real_file = self._prefix / relative_path
-		assert self.real_file.exists, f'{self.real_file} must exist first!'
+		assert self.real_file.exists(), f'{self.real_file} must exist first!'
 		self.link_dest = HOME / relative_path
 
 	def rm_from_home(self):
@@ -54,11 +54,11 @@ class Dotfile:
 			self.link_dest.unlink()  # removes the link
 
 		elif self.link_dest.is_dir():
-			raise IsDirectoryError(f'Path {str(self.link_dest)} is a directory.')
+			raise IsDirectoryError(f'Path {str(self.link_dest)} is a directory, refusing to remove.')
 
 		elif not self.link_dest.exists:
 			# raise FileNotFoundError(f'File {str(self.link_dest)} does not exist.')
-			out.step(f'File {str(self.link_dest)} does not exist in ~/, which is okay! Continuing...')
+			out.step(f'File {str(self.link_dest)} does not exist in ~/, which is okay! Skipping...')
 
 		else:
 			FileTypeError(f'Path {str(self.link_dest)} has an unknown type')
@@ -98,3 +98,11 @@ class Dotfile:
 			self.link_dest.symlink_to(self.link_dest)  # make the link
 
 		assert self.link_dest.readlink == self.real_file, f'{self.link_dest} should link to {self.real_file}, but it instead links to {self.link_dest.readlink}!'
+
+
+	def __str__(self) -> str:
+		return f'Symlink {self.link_dest} to {self.real_file}'
+	
+
+	def __repr__(self) -> str:
+		return f'Dotfile(real_file=Path({str(self.real_file)}), link_dest=Path({str(self.link_dest)}))'
