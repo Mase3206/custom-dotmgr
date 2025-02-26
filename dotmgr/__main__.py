@@ -6,19 +6,6 @@ from dotmgr.files import Dotfile
 import yaml
 
 
-class LinkPathConditionalRequired(argparse.Action):
-	def __call__(
-		self, 
-		parser: argparse.ArgumentParser, 
-		namespace: argparse.Namespace, 
-		values, 
-		option_string=None
-	):
-		if not getattr(namespace, 'conf_file', None):
-			if not values:
-				parser.error(f'{self.dest} is required if --config is not provided.')
-		setattr(namespace, self.dest, values)
-
 
 def from_conf(raw_conf: list[str | dict], parent = '') -> list[Dotfile]:
 	files: list[Dotfile] = []
