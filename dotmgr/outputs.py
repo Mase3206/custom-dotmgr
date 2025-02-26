@@ -26,6 +26,9 @@ def bad(step_text: str, status_text: str):
 def good(step_text: str, status_text: str):
 	print(f'{step_text}: {status_text}')
 
+def warn(text: str):
+	print(ANSI_RED + 'WARN: ' + ANSI_RESET + text)
+
 
 if __name__ == '__main__':
 	exit(1)
