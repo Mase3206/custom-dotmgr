@@ -6,7 +6,6 @@ import subprocess
 from abc import (
 	ABC,  # abstract base class helper
 	abstractmethod,
-
 )
 
 from dotmgr import outputs as out
@@ -80,6 +79,9 @@ class PackageManager(ABC):
 		
 		# if no match is found
 		raise UnknownSystemError('Unknown system. Package manager could not be determined.')
+	
+	def __str__(self) -> str:
+		return self.prog
 
 
 class Dnf(PackageManager):
