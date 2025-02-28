@@ -139,6 +139,8 @@ class DotfileManager:
 		for v in self:
 			if v == file:
 				return v
+		# no file found
+		raise FileNotFoundError(f'Dotfile with relative path "{file}" not found.')
 			
 	def add(self, file: str | Path | Dotfile): 
 		if type(file) == Dotfile:
