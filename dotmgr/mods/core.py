@@ -13,7 +13,7 @@ from abc import (
 from typing import Type, List
 
 from dotmgr import outputs as out
-from dotmgr.files import Dotfile, DotfileManager
+from dotmgr.files import Dotfile, DOTFILE_MANAGER
 from argparse import Namespace
 import yaml
 
@@ -28,15 +28,12 @@ class Mod(ABC):
 	required_file_names: list[str]
 	depends: List[Type[Mod]] = []  # these should be classes, not instances!
 	alias: str
-	_dotmgr: DotfileManager
-	'''Reference to global `DotfileManager` instance.'''
 
-	def __init__(self, dotmgr: DotfileManager) -> None:
+	def __init__(self) -> None:
 		super().__init__()
-		self._dotmgr = dotmgr
 		try:
 			self.files = [
-				self._dotmgr.get(df)
+				DOTFILE_MANAGER.get(df)
 				for df in self.required_file_names
 			]
 		except FileNotFoundError:
@@ -46,11 +43,11 @@ class Mod(ABC):
 	def install_dependencies(self): 
 		for dep in self.depends:
 			if not dep.detect():
-				dep(self._dotmgr).install()
+				dep().install()
 
 
-	@abstractmethod
 	@classmethod
+	@abstractmethod
 	def detect(cls) -> bool: ...
 
 	@abstractmethod
@@ -79,14 +76,16 @@ class ModManager:
 	'''Mods known to the manager.'''
 	active: list[Type[Mod]]
 	'''Mods used by the user's config.'''
-	_dotmgr: DotfileManager
-	'''DotfileManager instance.'''
 
 
-	def __init__(self, dotmgr: DotfileManager):
+	def __init__(self):
 		self.registered = {}
 		self.active = []
-		self._dotmgr = dotmgr
+	
+	def __new__(cls):
+		if not hasattr(cls, 'instance'):
+			cls.instance = super(ModManager, cls).__new__(cls)
+		return cls.instance
 
 	def register(self, mod: Type[Mod]):
 		'''
@@ -137,7 +136,7 @@ class ModManager:
 		elif not issubclass(mod, Mod):
 			raise TypeError('Mod to install must either be an alias or a subclass of Mod.')
 		
-		modInstance = mod(self._dotmgr)
+		modInstance = mod()
 		modInstance.install()
 
 	
@@ -157,6 +156,8 @@ class ModManager:
 	
 	def __iter__(self):
 		return iter(self.active)
+
+MOD_MANAGER = ModManager()
 
 
 

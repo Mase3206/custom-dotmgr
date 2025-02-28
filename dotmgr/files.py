@@ -6,9 +6,10 @@ Dotfile handling
 
 
 from pathlib import Path
+
 from dotmgr import HOME, PREFIX
 from dotmgr import outputs as out
-from typing import List, Sequence
+from typing import List, Sequence, Type
 import shutil
 from argparse import Namespace
 import yaml
@@ -135,6 +136,11 @@ class DotfileManager:
 	def __init__(self):
 		self._items: list[Dotfile] = []
 
+	def __new__(cls):
+		if not hasattr(cls, 'instance'):
+			cls.instance = super(DotfileManager, cls).__new__(cls)
+		return cls.instance
+
 	def get(self, file: str):
 		for v in self:
 			if v == file:
@@ -189,6 +195,7 @@ class DotfileManager:
 		return False
 
 
+DOTFILE_MANAGER = DotfileManager()
 
 
 def load_files(args: Namespace) -> DotfileManager:
@@ -204,12 +211,10 @@ def load_files(args: Namespace) -> DotfileManager:
 
 
 def _tc():
-	files = DotfileManager()
-
 	with open(Path('/Users/noahroberts/.config/dotfiles/config.yml').resolve(), 'r') as f:
-		files.add_from_conf(yaml.safe_load(f).get('files'))
+		DOTFILE_MANAGER.add_from_conf(yaml.safe_load(f).get('files'))
 
-	print(files.get('.zshrc'))
+	print(DOTFILE_MANAGER.get('.zshrc'))
 
 if __name__ == '__main__':
 	_tc()
