@@ -10,8 +10,9 @@ from pathlib import Path
 from urllib.request import urlretrieve
 
 from dotmgr import outputs as out
-from dotmgr.mods import MOD_MANAGER, PKGMGR
+from dotmgr.mods import MOD_MANAGER
 from dotmgr.mods.core import Mod
+from dotmgr.pkg import PKGMGR
 
 
 class Zsh(Mod):

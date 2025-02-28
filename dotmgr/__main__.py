@@ -2,8 +2,9 @@
 
 import argparse
 from pathlib import Path
-from dotmgr import loader
-from dotmgr.mods import Mod
+
+from dotmgr.mods import MOD_MANAGER, load_mods
+from dotmgr.files import DOTFILE_MANAGER, load_files
 
 
 def sync(args: argparse.Namespace):
@@ -15,16 +16,20 @@ def rm(args: argparse.Namespace):
 def link(args: argparse.Namespace):
 	if not args.conf_file and not args.path:
 		parse_error('<path> is required when a config file is not given with `-c`.')
+
+	load_files(args)
+	
+
 	
 def install(args: argparse.Namespace):
 	if not args.conf_file and not args.mod:
 		parse_error('<mod> is required when a config file is not given with `-c`.')
 	
-	files = loader.load_files(args)
-	mods = loader.load_mods(args)
+	load_mods(args)
+	load_files(args)
 
-	for m in mods:
-		m(files = [f for f in files if f in m.required_file_names]).install()
+	for mod in MOD_MANAGER:
+		mod().install()
 
 
 def get_args(man_args = []):

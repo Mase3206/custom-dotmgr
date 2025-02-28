@@ -7,6 +7,7 @@ from abc import (
 	ABC,  # abstract base class helper
 	abstractmethod
 )
+from typing import Type, TypeVar, Dict
 
 from dotmgr import outputs as out
 
@@ -27,7 +28,12 @@ def _command_exists(command: str) -> bool:
 	).returncode == 0
 
 
+T = TypeVar('T', bound='PackageManager')
+
 class PackageManager(ABC):
+	# keep track of all instances of subclasses of PackageManager
+	_instances: Dict[Type[PackageManager], PackageManager] = {}
+
 	prog: str
 	'''The package manager's command-line program.'''
 	install_sc: str
@@ -36,6 +42,12 @@ class PackageManager(ABC):
 	'''Subcommand used for updating package list (not the packages).'''
 	pkg_upgrade_sc: str
 	'''Subcommand used for upgrading packages (not the list).'''
+
+	def __new__(cls: Type[T], *args, **kwargs) -> T:
+		if cls not in cls._instances:
+			instance = super(PackageManager, cls).__new__(cls)
+			cls._instances[cls] = instance
+		return cls._instances[cls]  # type: ignore
 
 	@abstractmethod
 	def install(self, package: str):
@@ -83,7 +95,6 @@ class PackageManager(ABC):
 	def __str__(self) -> str:
 		return self.prog
 
-
 class Dnf(PackageManager):
 	prog = 'dnf'
 	install_sc = 'install'
@@ -112,3 +123,6 @@ class Brew(PackageManager):
 
 	def install(self, package: str):
 		return super().install(package)
+
+
+PKGMGR = PackageManager.detect()
