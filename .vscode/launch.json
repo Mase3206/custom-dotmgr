@@ -12,9 +12,9 @@
 			"module": "dotmgr",
 			"console": "integratedTerminal",
 			"args": [
-				"link",
 				"-c",
 				"/Users/noahroberts/.config/dotfiles/config.yml",
+				"install",
 			]
 		}
 	]

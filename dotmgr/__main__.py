@@ -3,6 +3,10 @@
 import argparse
 from pathlib import Path
 
+import dotmgr.files
+import dotmgr.mods
+import dotmgr.mods.register_mods  # Ensure mods are registered
+
 from dotmgr.mods import MOD_MANAGER, load_mods
 from dotmgr.files import DOTFILE_MANAGER, load_files
 
@@ -62,7 +66,8 @@ def get_args(man_args = []):
 		'install',
 		description = 'Install mods.'
 	)
-	sp_install.add_argument('mod')
+	sp_install.add_argument('mod', nargs='?')
+	sp_install.set_defaults(func=install)
 
 	sp_sync = sp_manager.add_parser(
 	    'sync',
@@ -70,7 +75,7 @@ def get_args(man_args = []):
 	)
 	sp_sync.set_defaults(func=sync)
 
-	if man_args == []:
+	if len(man_args) > 0:
 		args = parser.parse_args(man_args)
 	else:
 		args = parser.parse_args()
@@ -81,7 +86,8 @@ def get_args(man_args = []):
 
 
 def main():
-	args = get_args(man_args = ['install', 'omz'])
+	# args = get_args(man_args = ['install', 'omz'])
+	args = get_args()
 	args.func(args)
 
 

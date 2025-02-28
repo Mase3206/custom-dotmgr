@@ -10,10 +10,8 @@ from pathlib import Path
 from urllib.request import urlretrieve
 
 from dotmgr import outputs as out
-from dotmgr.mods import MOD_MANAGER
 from dotmgr.mods.core import Mod
 from dotmgr.pkg import PKGMGR
-
 
 class Zsh(Mod):
 	required_file_names = ['.zshrc']
@@ -21,7 +19,7 @@ class Zsh(Mod):
 
 	@classmethod
 	def detect(cls) -> bool:
-		if subprocess.run('zsh exit 0', shell=True).returncode == 0:
+		if subprocess.run('zsh -c exit 0', shell=True).returncode == 0:
 			out.good("Zsh install status", "already installed!")
 			return True
 		else:
@@ -40,16 +38,14 @@ class Zsh(Mod):
 		else:
 			out.subheader(f'Installing Zsh with {PKGMGR}')
 
-			PKGMGR.install('zsh')
-			# back up existing .zshrc
+			# PKGMGR.install('zsh')
 		
 
 	def post_install(self):
 		for f in self.files:
-			f.rm_from_home()
-			f.link()
-
-MOD_MANAGER.register(Zsh)
+			out.step(f'Linking Zsh files: {f}')
+			# f.rm_from_home()
+			# f.link()
 
 
 class OhMyZsh(Mod):
@@ -83,51 +79,47 @@ class OhMyZsh(Mod):
 			out.subheader('Installing Oh My Zsh')
 
 			USER = os.environ['USER']
-			temp_folder = Path(tempfile.mkdtemp())
+			# temp_folder = Path(tempfile.mkdtemp())
 
 			out.step('Downloading install script')
-			installer_path = Path(urlretrieve('https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh', temp_folder / 'install.sh')[0])
+			# installer_path = Path(urlretrieve('https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh', temp_folder / 'install.sh')[0])
 
 			out.step('Installing OMZ')
-			existing_environ = dict(os.environ.items())
-			subprocess.run(
-				['sh', installer_path, '--unattended', '--skip-chsh'],
-				env = {
-					'CHSH': 'yes',
-					'RUNZSH': 'no',
-					'KEEP_ZSHRC': 'yes',
-					**existing_environ
-				},
-				stdout = subprocess.DEVNULL,
-				stderr = subprocess.DEVNULL,
-			)
+			# existing_environ = dict(os.environ.items())
+			# subprocess.run(
+			# 	['sh', installer_path, '--unattended', '--skip-chsh'],
+			# 	env = {
+			# 		'CHSH': 'yes',
+			# 		'RUNZSH': 'no',
+			# 		'KEEP_ZSHRC': 'yes',
+			# 		**existing_environ
+			# 	},
+			# 	stdout = subprocess.DEVNULL,
+			# 	stderr = subprocess.DEVNULL,
+			# )
 
 			out.step(f"Changing {USER}'s shell to /usr/bin/zsh")
-			subprocess.run(
-				['chsh', USER, '-s', '/usr/bin/zsh'],
-				stdout = subprocess.DEVNULL,
-			)
+			# subprocess.run(
+			# 	['chsh', USER, '-s', '/usr/bin/zsh'],
+			# 	stdout = subprocess.DEVNULL,
+			# )
 
 			out.step(f'Cleaning up')
-			shutil.rmtree(temp_folder)
+			# shutil.rmtree(temp_folder)
 
-			out.step('Linking OMZ files')
 			for f in self.files:
-				f.rm_from_home(force=True)  # this shouldn't actually do anything, but do it just in case
-				f.link()
+				out.step(f'Linking OMZ files: {f}')
+				# f.rm_from_home(force=True)  # this shouldn't actually do anything, but do it just in case
+				# f.link()
 
 		
 	def post_install(self):
 		return
 
-MOD_MANAGER.register(OhMyZsh)
-
-
 
 def _tc():
+	from dotmgr.mods import MOD_MANAGER
 	MOD_MANAGER.activate('zsh')
 
-
 if __name__ == '__main__':
-# 	raise RuntimeError("This file should not be run directly.")
 	_tc()

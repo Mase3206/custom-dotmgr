@@ -173,4 +173,3 @@ def load_mods(args: Namespace):
 
 	for m in raw_mods:
 		MOD_MANAGER.activate(m)
-
