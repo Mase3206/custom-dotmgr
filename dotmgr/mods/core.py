@@ -8,15 +8,15 @@ if __name__ == '__main__':
 
 from abc import (
 	ABC,  # abstract base class helper
-	abstractmethod,
+	abstractmethod
 )
-from typing import Type, List
-
-from dotmgr import outputs as out
-from dotmgr.files import Dotfile, DOTFILE_MANAGER
 from argparse import Namespace
+from typing import List, Type
+
 import yaml
 
+from dotmgr import outputs as out
+from dotmgr.files import DOTFILE_MANAGER, Dotfile
 
 
 class MissingRequiredDotfileError(FileNotFoundError):

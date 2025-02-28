@@ -1,18 +1,18 @@
 #!/usr/bin/env python3.12
 
 '''
-Dotfile handling
+Dotfile management
 '''
 
-
+import shutil
+from argparse import Namespace
 from pathlib import Path
+from typing import List, Sequence, Type
+
+import yaml
 
 from dotmgr import HOME, PREFIX
 from dotmgr import outputs as out
-from typing import List, Sequence, Type
-import shutil
-from argparse import Namespace
-import yaml
 
 
 class IsDirectoryError(FileExistsError):

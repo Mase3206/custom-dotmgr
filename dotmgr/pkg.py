@@ -5,7 +5,7 @@ from __future__ import annotations
 import subprocess
 from abc import (
 	ABC,  # abstract base class helper
-	abstractmethod,
+	abstractmethod
 )
 
 from dotmgr import outputs as out

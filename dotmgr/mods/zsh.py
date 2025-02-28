@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-import subprocess
-from pathlib import Path
-import shutil
 import os
-from typing import List, Type, Generic
+import shutil
+import subprocess
 import tempfile
+from pathlib import Path
 from urllib.request import urlretrieve
 
 from dotmgr import outputs as out
-from dotmgr import HOME, PREFIX
-from dotmgr.mods import PKGMGR, MOD_MANAGER
+from dotmgr.mods import MOD_MANAGER, PKGMGR
 from dotmgr.mods.core import Mod
 
 
