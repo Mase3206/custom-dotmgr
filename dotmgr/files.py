@@ -1,14 +1,17 @@
 #!/usr/bin/env python3.12
 
 '''
-Dotfile handling.
+Dotfile handling
 '''
 
 
 from pathlib import Path
 from dotmgr import HOME, PREFIX
 from dotmgr import outputs as out
+from typing import List, Sequence
 import shutil
+from argparse import Namespace
+import yaml
 
 
 class IsDirectoryError(FileExistsError):
@@ -121,6 +124,90 @@ class Dotfile:
 		if isinstance(other, Dotfile):
 			return self._relative_path == other._relative_path
 		elif isinstance(other, str):
-			return self._relative_path == other
+			return str(self._relative_path) == other
 		else:
 			raise TypeError('Dotfiles can only be compared to other Dotfiles or relative string paths.')
+
+
+
+
+class DotfileManager:
+	def __init__(self):
+		self._items: list[Dotfile] = []
+
+	def get(self, file: str):
+		for v in self:
+			if v == file:
+				return v
+			
+	def add(self, file: str | Path | Dotfile): 
+		if type(file) == Dotfile:
+			self._items.append(file)
+		elif type(file) == str:
+			file = Path(file)
+		elif isinstance(file, Path):
+			self._items.append(Dotfile(file))
+		else:
+			raise TypeError(f'File must be of type str, Path, or Dotfile, not {type(file)}')
+
+	def add_from_conf(self, raw_conf: list[str | dict]):
+		'''
+		Make sure to pass the list located at key(`files`) only!
+		'''
+		def recurse(mgr: DotfileManager, raw_conf: list[str | dict], parent = ''):
+			for value in raw_conf:
+				if type(value) == dict:
+					fname = list(value.keys())[0]
+					if type(value[fname]) == list:
+						recurse(mgr, value[fname], parent=f'{fname}/')
+					else:
+						raise TypeError()
+				elif type(value) == str:
+					mgr.add(Path(parent + value))
+				else:
+					raise TypeError('File conf items must be either str paths or dicts.')
+		
+		recurse(self, raw_conf)
+
+
+	def __len__(self): 
+		return len(self._items)
+	
+	def __getitem__(self, key: int):
+		return self._items[key]
+	
+	def __iter__(self):
+		return iter(self._items)
+	
+	def __contains__(self, other: object) -> bool:
+		if isinstance(other, Dotfile) or isinstance(other, str):
+			for v in self:
+				if v == other:
+					return True
+		return False
+
+
+
+
+def load_files(args: Namespace) -> DotfileManager:
+	files = DotfileManager()
+
+	if args.conf_file:
+		with open(args.conf_file, 'r') as f:
+			files.add_from_conf(yaml.safe_load(f).get('files'))
+	else:
+		files.add(args.path)
+
+	return files
+
+
+def _tc():
+	files = DotfileManager()
+
+	with open(Path('/Users/noahroberts/.config/dotfiles/config.yml').resolve(), 'r') as f:
+		files.add_from_conf(yaml.safe_load(f).get('files'))
+
+	print(files.get('.zshrc'))
+
+if __name__ == '__main__':
+	_tc()
