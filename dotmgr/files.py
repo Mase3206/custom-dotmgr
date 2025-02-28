@@ -198,16 +198,15 @@ class DotfileManager:
 DOTFILE_MANAGER = DotfileManager()
 
 
-def load_files(args: Namespace) -> DotfileManager:
-	files = DotfileManager()
-
+def load_files(args: Namespace):
+	'''
+	Loads and adds each dotfile listed in the user's config file into the global DOTFILE_MANAGER.
+	'''
 	if args.conf_file:
 		with open(args.conf_file, 'r') as f:
-			files.add_from_conf(yaml.safe_load(f).get('files'))
+			DOTFILE_MANAGER.add_from_conf(yaml.safe_load(f).get('files'))
 	else:
-		files.add(args.path)
-
-	return files
+		DOTFILE_MANAGER.add(args.path)
 
 
 def _tc():

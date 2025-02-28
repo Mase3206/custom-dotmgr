@@ -162,13 +162,15 @@ MOD_MANAGER = ModManager()
 
 
 def load_mods(args: Namespace):
-	mods = []
-
+	'''
+	Loads and activates each mod listed in the user's config file into the global MOD_MANAGER. 
+	'''
 	if args.conf_file:
 		with open(args.conf_file, 'r') as f:
-			mods = yaml.safe_load(f).get('mods', [])
+			raw_mods = yaml.safe_load(f).get('mods', [])
 	else:
-		mods = []
+		raw_mods = [args.mod]
 
-	return mods	
+	for m in raw_mods:
+		MOD_MANAGER.activate(m)
 
