@@ -13,10 +13,14 @@ from abc import (
 from typing import Type, List
 
 from dotmgr import outputs as out
-from dotmgr.files import Dotfile
+from dotmgr.files import Dotfile, DotfileManager
 from argparse import Namespace
 import yaml
 
+
+
+class MissingRequiredDotfileError(FileNotFoundError):
+	pass
 
 
 class Mod(ABC):
@@ -24,25 +28,35 @@ class Mod(ABC):
 	required_file_names: list[str]
 	depends: List[Type[Mod]] = []  # these should be classes, not instances!
 	alias: str
+	_dotmgr: DotfileManager
+	'''Reference to global `DotfileManager` instance.'''
 
-	def __init__(self) -> None:
+	def __init__(self, dotmgr: DotfileManager) -> None:
 		super().__init__()
-		# if in_both(self.required_file_names, files):
-		# 	self.files = files
-		# else:
-		# 	raise ValueError('Missing one or more required dotfiles for this mod.')
-
-	def install_dependencies(self, args): 
+		self._dotmgr = dotmgr
+		try:
+			self.files = [
+				self._dotmgr.get(df)
+				for df in self.required_file_names
+			]
+		except FileNotFoundError:
+			raise MissingRequiredDotfileError(f'Missing one or more of the required dotfiles for this mod: {self.required_file_names}')
+		
+	
+	def install_dependencies(self): 
 		for dep in self.depends:
 			if not dep.detect():
-				dep().install()
+				dep(self._dotmgr).install()
+
 
 	@abstractmethod
 	@classmethod
 	def detect(cls) -> bool: ...
 
 	@abstractmethod
-	def install(self): ...
+	def install(self): 
+		self.install_dependencies()
+		# extended by subclasses
 
 	@abstractmethod
 	def pre_install(self): ...
@@ -61,26 +75,43 @@ class ModManager:
 	Manager for all Mods. Keeps track of which mods are registered (known) and activated (used), and allows for easy querying of registered and activated mods.
 	'''
 
-	registered: dict[str, Mod]
+	registered: dict[str, Type[Mod]]
 	'''Mods known to the manager.'''
-	active: list[Mod]
+	active: list[Type[Mod]]
 	'''Mods used by the user's config.'''
+	_dotmgr: DotfileManager
+	'''DotfileManager instance.'''
 
 
-	def __init__(self):
+	def __init__(self, dotmgr: DotfileManager):
 		self.registered = {}
 		self.active = []
+		self._dotmgr = dotmgr
 
-	def register(self, mod: Mod):
-		if isinstance(mod, Mod):
+	def register(self, mod: Type[Mod]):
+		'''
+		Make the given Mod subclass known by the global ModManager.
+
+		Arguments
+		---------
+			mod (Type[Mod]) : The class object *(not an instance!)* of a subclass of Mod.
+		'''
+		if issubclass(mod, Mod):
 			if self.registered.get(mod.alias, None):
 				out.warn('Mod already registered. Skipping...')
 			else:
 				self.registered[mod.alias] = mod
 		else:
-			raise TypeError('Mod to register must be of a subclass of BaseMod')
+			raise TypeError('Mod to register must be of a subclass of Mod.')
 
-	def activate(self, alias: str) -> Mod:
+	def activate(self, alias: str) -> Type[Mod]:
+		'''
+		Search for the Mod by the given alias and mark it as used in this user's config.
+
+		Arguments
+		---------
+			alias (str) : The alias of the Mod to activate.
+		'''
 		if alias not in self.active:
 			if (mod := self.registered.get(alias, None)):
 				self.active.append(mod)
@@ -92,11 +123,29 @@ class ModManager:
 		
 		return mod
 	
+	def install(self, mod: str | Type[Mod]):
+		'''
+		Install the given Mod.
+
+		Arguments
+		---------
+			mod (str | Type[Mod]) : The alias of a Mod subclass or Mod subclass type itself.
+		'''
+
+		if isinstance(mod, str):
+			mod = self.get_activated(mod)
+		elif not issubclass(mod, Mod):
+			raise TypeError('Mod to install must either be an alias or a subclass of Mod.')
+		
+		modInstance = mod(self._dotmgr)
+		modInstance.install()
+
 	
-	def get_registered(self, alias: str) -> Mod:
+	
+	def get_registered(self, alias: str) -> Type[Mod]:
 		return self.registered[alias]
 	
-	def get_activated(self, alias: str) -> Mod:
+	def get_activated(self, alias: str) -> Type[Mod]:
 		for m in self:
 			if alias == m.alias:
 				return m
