@@ -128,6 +128,19 @@ class Dotfile:
 			return str(self._relative_path) == other
 		else:
 			raise TypeError('Dotfiles can only be compared to other Dotfiles or relative string paths.')
+		
+	def __contains__(self, other: str | Path) -> bool:
+		# make it a path if it can
+		if isinstance(other, str):
+			other = Path(other)
+		
+		if isinstance(other, Path):
+			return (
+				other in self._relative_path.parents
+				 or other == self._relative_path
+			)
+		
+		return False
 
 
 
@@ -141,12 +154,22 @@ class DotfileManager:
 			cls.instance = super(DotfileManager, cls).__new__(cls)
 		return cls.instance
 
-	def get(self, file: str):
+	def get(self, relative_path: str) -> list[Dotfile]:
+		files: list[Dotfile] = []
 		for v in self:
-			if v == file:
-				return v
-		# no file found
-		raise FileNotFoundError(f'Dotfile with relative path "{file}" not found.')
+			if relative_path == v:
+				files.append(v)
+			
+			# TODO: accept directory name and return all files that that directory contains -- maybe done?
+			elif relative_path in v:
+				if v not in files:
+					files.append(v)
+		
+		if len(files) > 0:
+			return files
+		else:
+			# no file found
+			raise FileNotFoundError(f'Dotfile with relative path "{relative_path}" not found.')
 			
 	def add(self, file: str | Path | Dotfile): 
 		if type(file) == Dotfile:
@@ -193,6 +216,12 @@ class DotfileManager:
 				if v == other:
 					return True
 		return False
+	
+	def __repr__(self) -> str:
+		return f'[{', '.join([repr(f) for f in self])}]'
+	
+	def __str__(self) -> str:
+		return ', '.join([str(f) for f in self])
 
 
 DOTFILE_MANAGER = DotfileManager()
@@ -214,6 +243,8 @@ def _tc():
 		DOTFILE_MANAGER.add_from_conf(yaml.safe_load(f).get('files'))
 
 	print(DOTFILE_MANAGER.get('.zshrc'))
+	print(DOTFILE_MANAGER.get('.oh-my-zsh/'))
+	print(DOTFILE_MANAGER)
 
 if __name__ == '__main__':
 	_tc()

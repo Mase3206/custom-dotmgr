@@ -31,11 +31,10 @@ class Mod(ABC):
 
 	def __init__(self) -> None:
 		super().__init__()
+		self.files = []
 		try:
-			self.files = [
-				DOTFILE_MANAGER.get(df)
-				for df in self.required_file_names
-			]
+			for df in self.required_file_names:
+				self.files.append(*DOTFILE_MANAGER.get(df))
 		except FileNotFoundError:
 			raise MissingRequiredDotfileError(f'Missing one or more of the required dotfiles for this mod: {self.required_file_names}')
 		
